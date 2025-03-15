@@ -1,7 +1,7 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { UserMenu } from '@/components/UserMenu';
+import UserMenu from '@/components/UserMenu';
 import { useAuth } from '@/contexts/AuthContext';
 
 const AuthHeader = () => {
