@@ -4,7 +4,7 @@ import { Upload, FileType, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface FileUploaderProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File, textContent: string) => void;
 }
 
 const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
@@ -13,6 +13,7 @@ const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadComplete, setUploadComplete] = useState(false);
+  const [isExtracting, setIsExtracting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -70,15 +71,63 @@ const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
           clearInterval(interval);
           setTimeout(() => {
             setIsUploading(false);
-            setUploadComplete(true);
-            onFileUpload(file);
-            toast.success('File uploaded successfully');
+            extractTextFromPDF(file);
           }, 500);
           return 100;
         }
         return newProgress;
       });
     }, 100);
+  };
+
+  const extractTextFromPDF = async (file: File) => {
+    setIsExtracting(true);
+    try {
+      // Create a FileReader to read the file as an ArrayBuffer
+      const reader = new FileReader();
+      
+      reader.onload = async function(event) {
+        try {
+          // Import the pdf.js library dynamically
+          const pdfjsLib = await import('pdfjs-dist');
+          
+          // Set the worker source
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+          
+          // Load the PDF file
+          const pdfData = new Uint8Array(event.target?.result as ArrayBuffer);
+          const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+          
+          const pdf = await loadingTask.promise;
+          let textContent = '';
+          
+          // Extract text from each page
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const strings = content.items.map((item: any) => item.str);
+            textContent += strings.join(' ') + '\n';
+          }
+          
+          setIsExtracting(false);
+          setUploadComplete(true);
+          
+          // Call the onFileUpload callback with the extracted text
+          onFileUpload(file, textContent);
+          toast.success('PDF text extracted successfully');
+        } catch (error) {
+          console.error('Error extracting text from PDF:', error);
+          setIsExtracting(false);
+          toast.error('Error extracting text from PDF');
+        }
+      };
+      
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error('Error reading PDF:', error);
+      setIsExtracting(false);
+      toast.error('Error reading PDF file');
+    }
   };
   
   const handleButtonClick = () => {
@@ -149,7 +198,7 @@ const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
               <div className="flex items-center">
                 <span className="bg-green-100 dark:bg-green-900/20 text-green-500 text-xs px-2 py-1 rounded-full flex items-center mr-3">
                   <Check className="w-3 h-3 mr-1" />
-                  Uploaded
+                  Processed
                 </span>
                 <button
                   onClick={resetUpload}
@@ -160,16 +209,16 @@ const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
               </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {isUploading ? `${uploadProgress}%` : ''}
+                {isExtracting ? 'Extracting text...' : (isUploading ? `${uploadProgress}%` : '')}
               </div>
             )}
           </div>
           
-          {isUploading && (
+          {(isUploading || isExtracting) && (
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
               <div 
                 className="bg-blue-500 h-1.5 rounded-full transition-all duration-200" 
-                style={{ width: `${uploadProgress}%` }} 
+                style={{ width: isExtracting ? '100%' : `${uploadProgress}%` }} 
               />
             </div>
           )}

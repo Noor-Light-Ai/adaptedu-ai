@@ -9,116 +9,7 @@ import Header from '@/components/Header';
 import FileUploader from '@/components/FileUploader';
 import CourseForm, { CourseFormData } from '@/components/CourseForm';
 import CoursePreview, { CourseSection } from '@/components/CoursePreview';
-
-// Mock data and functions for demo
-const mockCourseGeneration = (formData: CourseFormData) => {
-  return new Promise<{
-    title: string;
-    description: string;
-    sections: CourseSection[];
-    estimatedDuration: string;
-    learningObjectives: string[];
-  }>((resolve) => {
-    // Simulate API delay
-    setTimeout(() => {
-      resolve({
-        title: "Introduction to Machine Learning Concepts",
-        description: "A beginner-friendly guide to understanding the fundamentals of machine learning, including key algorithms, practical applications, and implementation basics.",
-        estimatedDuration: "1.5 hours",
-        learningObjectives: [
-          "Understand the core concepts and terminology of machine learning",
-          "Identify different types of machine learning algorithms and their use cases",
-          "Recognize how machine learning is applied in real-world situations",
-          "Develop a basic understanding of the machine learning workflow"
-        ],
-        sections: [
-          {
-            id: "s1",
-            type: "header",
-            content: "Introduction to Machine Learning"
-          },
-          {
-            id: "s2",
-            type: "paragraph",
-            content: "Machine learning is a subset of artificial intelligence that provides systems the ability to automatically learn and improve from experience without being explicitly programmed. The focus is on developing computer programs that can access data and use it to learn for themselves."
-          },
-          {
-            id: "s3",
-            type: "paragraph",
-            content: "The process of learning begins with observations or data, such as examples, direct experience, or instruction. It looks for patterns in data so that later decisions can be made based on the examples that we provide. The primary aim is to allow computers to learn automatically without human intervention or assistance and adjust actions accordingly."
-          },
-          {
-            id: "s4",
-            type: "header",
-            content: "Types of Machine Learning"
-          },
-          {
-            id: "s5",
-            type: "subheader",
-            content: "Supervised Learning"
-          },
-          {
-            id: "s6",
-            type: "paragraph",
-            content: "Supervised learning is where you have input variables (x) and an output variable (y) and you use an algorithm to learn the mapping function from the input to the output. The goal is to approximate the mapping function so well that when you have new input data (x), you can predict the output variables (y) for that data."
-          },
-          {
-            id: "s7",
-            type: "image",
-            content: "https://images.unsplash.com/photo-1591453089816-0fbb971b454c?q=80&w=2070&auto=format&fit=crop"
-          },
-          {
-            id: "s8",
-            type: "subheader",
-            content: "Unsupervised Learning"
-          },
-          {
-            id: "s9",
-            type: "paragraph",
-            content: "Unsupervised learning is where you only have input data (x) and no corresponding output variables. The goal for unsupervised learning is to model the underlying structure or distribution in the data in order to learn more about the data."
-          },
-          {
-            id: "s10",
-            type: "quiz",
-            content: "Which type of machine learning uses labeled data to train algorithms?",
-            options: [
-              "Unsupervised Learning",
-              "Supervised Learning",
-              "Reinforcement Learning",
-              "Semi-supervised Learning"
-            ],
-            answer: 1
-          },
-          {
-            id: "s11",
-            type: "header",
-            content: "Common Machine Learning Algorithms"
-          },
-          {
-            id: "s12",
-            type: "paragraph",
-            content: "Machine learning algorithms are the engines of machine learning, meaning it is the algorithms that turn a data set into a model. Which algorithm works best depends on the type of problem you're solving, the computing resources available, and the nature of the data."
-          },
-          {
-            id: "s13",
-            type: "subheader",
-            content: "Linear Regression"
-          },
-          {
-            id: "s14",
-            type: "paragraph",
-            content: "Linear regression is perhaps one of the most well-known and well-understood algorithms in statistics and machine learning. Predictive modeling is primarily concerned with minimizing the error of a model or making the most accurate predictions possible, at the expense of explainability."
-          },
-          {
-            id: "s15",
-            type: "assignment",
-            content: "Research and write a brief summary (250-300 words) of a real-world application that uses linear regression. Include what data is being used, what is being predicted, and why linear regression is an appropriate choice for this application."
-          }
-        ]
-      });
-    }, 3000);
-  });
-};
+import { supabase } from '@/integrations/supabase/client';
 
 const Create = () => {
   const navigate = useNavigate();
@@ -126,6 +17,8 @@ const Create = () => {
   const [isFileUploaded, setIsFileUploaded] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [pdfTextContent, setPdfTextContent] = useState<string>('');
+  const [pdfAnalysis, setPdfAnalysis] = useState<any>(null);
   const [generatedCourse, setGeneratedCourse] = useState<null | {
     title: string;
     description: string;
@@ -135,9 +28,39 @@ const Create = () => {
   }>(null);
   const [formData, setFormData] = useState<CourseFormData | null>(null);
   
-  const handleFileUpload = (file: File) => {
+  const handleFileUpload = async (file: File, textContent: string) => {
     setUploadedFile(file);
+    setPdfTextContent(textContent);
     setIsFileUploaded(true);
+    
+    try {
+      toast.info('Analyzing PDF content...', { duration: 3000 });
+      
+      // Call the edge function to analyze the PDF
+      const { data, error } = await supabase.functions.invoke('analyze-pdf', {
+        body: { 
+          pdfContent: textContent,
+          prompt: "Analyze this PDF content and extract key information",
+          options: {
+            includeQuizzes: true,
+            includeAssignments: false,
+            includeImages: true
+          }
+        }
+      });
+      
+      if (error) {
+        console.error('Error analyzing PDF:', error);
+        toast.error('Error analyzing PDF content');
+        return;
+      }
+      
+      setPdfAnalysis(data);
+      toast.success('PDF analysis complete!');
+    } catch (error) {
+      console.error('Error during PDF analysis:', error);
+      toast.error('Failed to analyze PDF');
+    }
   };
   
   const handleFormSubmit = async (data: CourseFormData) => {
@@ -145,14 +68,28 @@ const Create = () => {
     setIsGenerating(true);
     
     try {
-      // In a real implementation, this would call an AI API with the PDF file and form data
-      const courseData = await mockCourseGeneration(data);
+      // Call the edge function to generate course content
+      const { data: courseData, error } = await supabase.functions.invoke('generate-course', {
+        body: {
+          pdfText: pdfTextContent,
+          analysis: pdfAnalysis,
+          formData: data
+        }
+      });
+      
+      if (error) {
+        console.error('Error generating course:', error);
+        toast.error('Failed to generate course. Please try again.');
+        setIsGenerating(false);
+        return;
+      }
+      
       setGeneratedCourse(courseData);
       setCurrentStep(2);
       toast.success('Course generated successfully!');
     } catch (error) {
-      toast.error('Failed to generate course. Please try again.');
       console.error('Error generating course:', error);
+      toast.error('Failed to generate course. Please try again.');
     } finally {
       setIsGenerating(false);
     }
