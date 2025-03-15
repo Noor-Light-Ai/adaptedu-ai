@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Upload, BookOpen, FileText, RotateCcw, Zap, Lightbulb, Award } from 'lucide-react';
@@ -72,6 +71,28 @@ const Index = () => {
                 <div className="absolute top-12 right-12 w-full h-full bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-2xl border border-white/10 dark:border-white/5 -z-20"></div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Video Section */}
+      <section className="py-16 px-6 bg-gray-50 dark:bg-gray-900/30">
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <h2 className="text-3xl font-bold mb-4">See AdaptEdU in Action</h2>
+            <p className="text-gray-600 dark:text-gray-300">
+              Watch this short video to understand how AdaptEdU works and how it can transform your content
+            </p>
+          </div>
+          
+          <div className="aspect-w-16 aspect-h-9 max-w-4xl mx-auto rounded-xl overflow-hidden shadow-xl">
+            <iframe 
+              src="https://www.youtube.com/embed/YlTbv09no7M" 
+              title="AdaptEdU Explainer Video"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen
+              className="w-full h-full"
+            ></iframe>
           </div>
         </div>
       </section>
