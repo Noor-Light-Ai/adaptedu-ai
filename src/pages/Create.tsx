@@ -95,10 +95,41 @@ const Create = () => {
     }
   };
   
-  const handlePublish = () => {
-    // In a real implementation, this would save the course to the user's library
-    toast.success('Course published to your library!');
-    navigate('/dashboard');
+  const handlePublish = async () => {
+    if (!generatedCourse) return;
+
+    try {
+      // Save the course to the user's library
+      const { data: user } = await supabase.auth.getUser();
+      
+      if (!user || !user.user) {
+        toast.error('You must be logged in to publish a course');
+        return;
+      }
+      
+      // Create a new course in the user's library
+      const { data, error } = await supabase.from('courses').insert({
+        user_id: user.user.id,
+        title: generatedCourse.title,
+        description: generatedCourse.description,
+        cover_image: generatedCourse.coverImage || 'https://images.unsplash.com/photo-1571260899304-425eee4c7efd?q=80&w=2070&auto=format&fit=crop',
+        duration: generatedCourse.estimatedDuration,
+        sections: generatedCourse.sections.length,
+        content: generatedCourse
+      }).select().single();
+      
+      if (error) {
+        console.error('Error saving course:', error);
+        toast.error('Failed to save course to library');
+        return;
+      }
+      
+      toast.success('Your course has been added to the library successfully!');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error publishing course:', error);
+      toast.error('Failed to publish course');
+    }
   };
   
   const getStepIcon = (step: number, currentStep: number) => {
@@ -185,7 +216,7 @@ const Create = () => {
         </div>
         
         {currentStep === 1 && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 gap-8">
             <div className="space-y-6">
               <Card>
                 <CardContent className="p-6">
@@ -226,23 +257,6 @@ const Create = () => {
                   />
                 </CardContent>
               </Card>
-            </div>
-            
-            <div className="hidden lg:block">
-              <div className="sticky top-28">
-                <img 
-                  src="https://images.unsplash.com/photo-1571260899304-425eee4c7efd?q=80&w=2070&auto=format&fit=crop" 
-                  alt="Course creation illustration" 
-                  className="rounded-lg object-cover h-[600px] w-full"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-lg"></div>
-                <div className="absolute bottom-0 left-0 p-8">
-                  <h3 className="text-white text-2xl font-bold mb-2">Transform Your Knowledge</h3>
-                  <p className="text-white/80">
-                    Your PDF will be processed and structured into an engaging course with sections, quizzes, and more.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         )}

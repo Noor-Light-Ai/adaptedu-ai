@@ -26,20 +26,20 @@ const TtsPlayer = ({ text }: TtsPlayerProps) => {
 
       setIsLoading(true);
       
-      // Call the OpenAI TTS API through Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('process-voice-command', {
+      // Call the text-to-speech edge function
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: {
-          command: text,
-          context: '',
+          text: text,
           voice: 'alloy'
         }
       });
       
       if (error) {
+        console.error('TTS error:', error);
         throw new Error(error.message);
       }
       
-      if (!data.audioContent) {
+      if (!data || !data.audioContent) {
         throw new Error('No audio content returned');
       }
       

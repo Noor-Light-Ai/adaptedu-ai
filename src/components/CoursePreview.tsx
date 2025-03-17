@@ -142,8 +142,11 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   );
 
   const renderContentPage = (pageIndex: number) => {
+    // Calculate section indices for this page
     const startIndex = (pageIndex - 1) * sectionsPerPage;
-    const endIndex = Math.min(startIndex + sectionsPerPage, course.sections.length);
+    const endIndex = Math.min(startIndex + sectionsPerPage, totalSections);
+    
+    // Get sections for this page
     const sectionsToShow = course.sections.slice(startIndex, endIndex);
     
     return (
