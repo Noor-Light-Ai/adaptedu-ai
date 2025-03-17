@@ -8,11 +8,14 @@ import {
   Clock, 
   Award, 
   Mic,
-  Check
+  Check,
+  Play,
+  Square
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import TtsPlayer from './TtsPlayer';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface CourseSection {
   id: string;
@@ -41,7 +44,10 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   
   // Calculate pages with 3 sections per page (except cover)
   const totalSections = course.sections.length;
@@ -60,6 +66,13 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   useEffect(() => {
     if (previewRef.current) {
       previewRef.current.scrollTop = 0;
+    }
+    
+    // Stop audio playback when changing pages
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlaying(false);
     }
   }, [currentPage]);
   
@@ -86,6 +99,87 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   const isAnswerCorrect = (sectionId: string) => {
     const section = course.sections.find(s => s.id === sectionId);
     return section?.answer === selectedAnswers[sectionId];
+  };
+
+  const handlePlayAudio = async () => {
+    try {
+      // If already playing, stop the playback
+      if (isPlaying && audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+        setIsPlaying(false);
+        return;
+      }
+
+      setIsLoading(true);
+      
+      // Gather text content for the current page
+      let textToRead = '';
+      
+      if (currentPage === 0) {
+        // Cover page content
+        textToRead = `${course.title}. ${course.description}. Learning objectives: ${course.learningObjectives.join('. ')}`;
+      } else {
+        // Get sections for this page
+        const startIndex = (currentPage - 1) * sectionsPerPage;
+        const endIndex = Math.min(startIndex + sectionsPerPage, totalSections);
+        const sectionsToRead = course.sections.slice(startIndex, endIndex);
+        
+        // Only include text content (no quizzes or images)
+        textToRead = sectionsToRead
+          .filter(section => ['header', 'subheader', 'paragraph'].includes(section.type))
+          .map(section => section.content)
+          .join('. ');
+      }
+      
+      if (!textToRead) {
+        toast.error('No text content to read on this page');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Call the text-to-speech edge function
+      const { data, error } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: textToRead,
+          voice: 'alloy'
+        }
+      });
+      
+      if (error) {
+        console.error('TTS error:', error);
+        throw new Error(error.message);
+      }
+      
+      if (!data || !data.audioContent) {
+        throw new Error('No audio content returned');
+      }
+      
+      // Create audio element and play
+      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        setIsPlaying(false);
+        audioRef.current = null;
+      };
+      
+      audio.onerror = (e) => {
+        console.error('Audio playback error:', e);
+        toast.error('Failed to play audio');
+        setIsPlaying(false);
+        setIsLoading(false);
+      };
+      
+      await audio.play();
+      setIsPlaying(true);
+      
+    } catch (error) {
+      console.error('TTS error:', error);
+      toast.error('Failed to generate speech');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderCoverPage = () => (
@@ -164,29 +258,26 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
     switch (section.type) {
       case 'header':
         return (
-          <div className="relative">
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-50 mb-2">
               {section.content}
             </h2>
-            {useTts && <TtsPlayer text={section.content} />}
           </div>
         );
       case 'subheader':
         return (
-          <div className="relative">
+          <div>
             <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
               {section.content}
             </h3>
-            {useTts && <TtsPlayer text={section.content} />}
           </div>
         );
       case 'paragraph':
         return (
-          <div className="relative">
+          <div>
             <p className="text-gray-700 dark:text-gray-200 leading-relaxed">
               {section.content}
             </p>
-            {useTts && <TtsPlayer text={section.content} />}
           </div>
         );
       case 'image':
@@ -335,15 +426,44 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
       </div>
 
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePrevPage}
-          disabled={currentPage === 0}
-        >
-          <ChevronLeft className="mr-1 h-4 w-4" />
-          Previous
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevPage}
+            disabled={currentPage === 0}
+          >
+            <ChevronLeft className="mr-1 h-4 w-4" />
+            Previous
+          </Button>
+
+          {useTts && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePlayAudio}
+              disabled={isLoading}
+              className={`gap-2 ${isPlaying ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/30' : ''}`}
+            >
+              {isLoading ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
+                  Loading...
+                </>
+              ) : isPlaying ? (
+                <>
+                  <Square className="h-4 w-4 fill-current" />
+                  Stop Audio
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 fill-current" />
+                  Play Audio
+                </>
+              )}
+            </Button>
+          )}
+        </div>
 
         <Button 
           onClick={onPublish}

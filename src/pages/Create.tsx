@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Check } from 'lucide-react';
@@ -39,7 +38,6 @@ const Create = () => {
     try {
       toast.info('Analyzing PDF content...', { duration: 3000 });
       
-      // Call the edge function to analyze the PDF
       const { data, error } = await supabase.functions.invoke('analyze-pdf', {
         body: { 
           pdfContent: textContent,
@@ -71,7 +69,6 @@ const Create = () => {
     setIsGenerating(true);
     
     try {
-      // Call the edge function to generate course content
       const { data: courseData, error } = await supabase.functions.invoke('generate-course', {
         body: {
           pdfText: pdfTextContent,
@@ -102,7 +99,6 @@ const Create = () => {
     if (!generatedCourse) return;
 
     try {
-      // Save the course to the user's library
       const { data: user } = await supabase.auth.getUser();
       
       if (!user || !user.user) {
@@ -110,8 +106,6 @@ const Create = () => {
         return;
       }
       
-      // Create a new course in the database using a direct SQL query
-      // to bypass the type checking until Supabase types are regenerated
       const { data, error } = await supabase
         .from('courses')
         .insert({
@@ -121,7 +115,7 @@ const Create = () => {
           cover_image: generatedCourse.coverImage || 'https://images.unsplash.com/photo-1571260899304-425eee4c7efd?q=80&w=2070&auto=format&fit=crop',
           duration: generatedCourse.estimatedDuration,
           sections: generatedCourse.sections.length,
-          content: generatedCourse
+          content: JSON.parse(JSON.stringify(generatedCourse))
         })
         .select()
         .single();
@@ -170,7 +164,6 @@ const Create = () => {
           </p>
         </div>
         
-        {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center">
             <div className="flex items-center">
