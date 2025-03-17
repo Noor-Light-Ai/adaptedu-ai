@@ -43,7 +43,19 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
   const previewRef = useRef<HTMLDivElement>(null);
   
-  const totalPages = Math.ceil(course.sections.length / 3) + 1; // +1 for cover page
+  // Calculate pages with 3 sections per page (except cover)
+  const totalSections = course.sections.length;
+  const sectionsPerPage = 3;
+  const contentPages = Math.ceil(totalSections / sectionsPerPage);
+  const totalPages = contentPages + 1; // +1 for cover page
+  
+  // Create a mapping of sections to pages for easy reference
+  const sectionToPageMap = course.sections.reduce((map, section, index) => {
+    // Adding 1 because page 0 is the cover
+    const pageNumber = Math.floor(index / sectionsPerPage) + 1;
+    map[section.id] = pageNumber;
+    return map;
+  }, {} as Record<string, number>);
   
   useEffect(() => {
     if (previewRef.current) {
@@ -130,8 +142,8 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   );
 
   const renderContentPage = (pageIndex: number) => {
-    const startIndex = (pageIndex - 1) * 3;
-    const endIndex = startIndex + 3;
+    const startIndex = (pageIndex - 1) * sectionsPerPage;
+    const endIndex = Math.min(startIndex + sectionsPerPage, course.sections.length);
     const sectionsToShow = course.sections.slice(startIndex, endIndex);
     
     return (
@@ -314,7 +326,7 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
       <div 
         ref={previewRef}
         className="overflow-y-auto"
-        style={{ maxHeight: 'calc(100vh - 300px)', minHeight: '500px' }}
+        style={{ maxHeight: 'calc(100vh - 300px)', minHeight: '600px' }}
       >
         {currentPage === 0 ? renderCoverPage() : renderContentPage(currentPage)}
       </div>

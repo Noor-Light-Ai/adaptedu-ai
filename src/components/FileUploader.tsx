@@ -2,6 +2,7 @@
 import { useState, useRef, DragEvent, ChangeEvent } from 'react';
 import { Upload, FileType, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
 
 interface FileUploaderProps {
   onFileUpload: (file: File, textContent: string) => void;
@@ -200,12 +201,14 @@ const FileUploader = ({ onFileUpload }: FileUploaderProps) => {
                   <Check className="w-3 h-3 mr-1" />
                   Processed
                 </span>
-                <button
+                <Button
                   onClick={resetUpload}
-                  className="text-xs text-gray-500 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400"
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
                 >
                   Change
-                </button>
+                </Button>
               </div>
             ) : (
               <div className="text-xs text-gray-500 dark:text-gray-400">
