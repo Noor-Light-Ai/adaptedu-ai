@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, FileText, Check } from 'lucide-react';
@@ -106,6 +107,9 @@ const Create = () => {
         return;
       }
       
+      // Convert GeneratedCourse to JSON-compatible object
+      const courseContent = JSON.parse(JSON.stringify(generatedCourse));
+      
       const courseData = {
         user_id: user.user.id,
         title: generatedCourse.title,
@@ -113,7 +117,7 @@ const Create = () => {
         cover_image: generatedCourse.coverImage || 'https://images.unsplash.com/photo-1571260899304-425eee4c7efd?q=80&w=2070&auto=format&fit=crop',
         duration: generatedCourse.estimatedDuration,
         sections: generatedCourse.sections.length,
-        content: generatedCourse
+        content: courseContent // Use the JSON-stringified and parsed object
       };
       
       console.log('Publishing course with data:', courseData);
