@@ -1,5 +1,4 @@
 
-import { useState } from 'react';
 import { Award, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -7,18 +6,26 @@ import { CourseSection } from '../CoursePreview';
 
 interface CourseQuizSectionProps {
   section: CourseSection;
+  selectedAnswer?: number;
+  showAnswer: boolean;
+  onAnswerSelect: (sectionId: string, answerIndex: number) => void;
+  onCheckAnswer: (sectionId: string) => void;
 }
 
-const CourseQuizSection = ({ section }: CourseQuizSectionProps) => {
-  const [selectedAnswer, setSelectedAnswer] = useState<number | undefined>();
-  const [showAnswer, setShowAnswer] = useState(false);
-
+const CourseQuizSection = ({ 
+  section, 
+  selectedAnswer, 
+  showAnswer, 
+  onAnswerSelect, 
+  onCheckAnswer 
+}: CourseQuizSectionProps) => {
+  
   const handleAnswerSelect = (index: number) => {
-    setSelectedAnswer(index);
+    onAnswerSelect(section.id, index);
   };
 
   const handleCheckAnswer = () => {
-    setShowAnswer(true);
+    onCheckAnswer(section.id);
   };
 
   const isAnswerCorrect = () => {

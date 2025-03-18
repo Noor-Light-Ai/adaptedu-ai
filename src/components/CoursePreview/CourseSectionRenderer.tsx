@@ -5,9 +5,17 @@ import CourseAssignmentSection from './CourseAssignmentSection';
 
 interface CourseSectionRendererProps {
   section: CourseSection;
+  quizState?: { selectedAnswer?: number; showAnswer: boolean };
+  onAnswerSelect: (sectionId: string, answerIndex: number) => void;
+  onCheckAnswer: (sectionId: string) => void;
 }
 
-const CourseSectionRenderer = ({ section }: CourseSectionRendererProps) => {
+const CourseSectionRenderer = ({ 
+  section, 
+  quizState, 
+  onAnswerSelect, 
+  onCheckAnswer 
+}: CourseSectionRendererProps) => {
   switch (section.type) {
     case 'header':
       return (
@@ -44,7 +52,15 @@ const CourseSectionRenderer = ({ section }: CourseSectionRendererProps) => {
         </div>
       );
     case 'quiz':
-      return <CourseQuizSection section={section} />;
+      return (
+        <CourseQuizSection 
+          section={section} 
+          selectedAnswer={quizState?.selectedAnswer} 
+          showAnswer={quizState?.showAnswer || false}
+          onAnswerSelect={onAnswerSelect}
+          onCheckAnswer={onCheckAnswer}
+        />
+      );
     case 'assignment':
       return <CourseAssignmentSection section={section} />;
     default:

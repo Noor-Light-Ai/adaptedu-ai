@@ -29,9 +29,17 @@ interface CoursePreviewProps {
   onPublish: () => Promise<void> | void;
 }
 
+interface QuizState {
+  [sectionId: string]: {
+    selectedAnswer?: number;
+    showAnswer: boolean;
+  };
+}
+
 const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   const [currentPage, setCurrentPage] = useState(0);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [quizAnswers, setQuizAnswers] = useState<QuizState>({});
   const previewRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
@@ -43,6 +51,20 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   const quizCount = course.sections.filter(s => s.type === 'quiz').length;
   const assignmentCount = course.sections.filter(s => s.type === 'assignment').length;
 
+  // Initialize quiz state for all quiz sections
+  useEffect(() => {
+    const quizState: QuizState = {};
+    course.sections.forEach(section => {
+      if (section.type === 'quiz') {
+        quizState[section.id] = {
+          selectedAnswer: undefined,
+          showAnswer: false
+        };
+      }
+    });
+    setQuizAnswers(quizState);
+  }, [course.sections]);
+
   useEffect(() => {
     if (previewRef.current) {
       previewRef.current.scrollTop = 0;
@@ -53,6 +75,26 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
       audioRef.current = null;
     }
   }, [currentPage]);
+
+  const handleAnswerSelect = (sectionId: string, answerIndex: number) => {
+    setQuizAnswers(prev => ({
+      ...prev,
+      [sectionId]: {
+        ...prev[sectionId],
+        selectedAnswer: answerIndex
+      }
+    }));
+  };
+
+  const handleCheckAnswer = (sectionId: string) => {
+    setQuizAnswers(prev => ({
+      ...prev,
+      [sectionId]: {
+        ...prev[sectionId],
+        showAnswer: true
+      }
+    }));
+  };
 
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
@@ -122,7 +164,12 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
             assignmentCount={assignmentCount}
           />
         ) : (
-          <CourseContentPage sections={getSectionsForCurrentPage()} />
+          <CourseContentPage 
+            sections={getSectionsForCurrentPage()} 
+            quizAnswers={quizAnswers}
+            onAnswerSelect={handleAnswerSelect}
+            onCheckAnswer={handleCheckAnswer}
+          />
         )}
       </div>
 
