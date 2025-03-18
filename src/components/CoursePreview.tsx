@@ -10,7 +10,8 @@ import {
   Mic,
   Check,
   Play,
-  Square
+  Square,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -138,6 +139,13 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         return;
       }
       
+      // Limit text length to prevent API errors (OpenAI has a limit)
+      if (textToRead.length > 4000) {
+        textToRead = textToRead.substring(0, 4000) + '...';
+      }
+      
+      console.log('Sending TTS request with text length:', textToRead.length);
+      
       // Call the text-to-speech edge function
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: {
@@ -147,19 +155,27 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
       });
       
       if (error) {
-        console.error('TTS error:', error);
-        throw new Error(error.message);
+        console.error('TTS error from function invoke:', error);
+        throw new Error(error.message || 'Failed to call TTS service');
       }
       
       if (!data || !data.audioContent) {
-        throw new Error('No audio content returned');
+        console.error('No audio content returned:', data);
+        throw new Error('No audio content returned from the TTS service');
       }
       
       // Create audio element and play
-      const audio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      const audio = new Audio();
+      audio.src = `data:audio/mp3;base64,${data.audioContent}`;
       audioRef.current = audio;
       
+      // Set up event handlers for the audio element
+      audio.onloadeddata = () => {
+        console.log('Audio loaded successfully');
+      };
+      
       audio.onended = () => {
+        console.log('Audio playback ended');
         setIsPlaying(false);
         audioRef.current = null;
       };
@@ -171,12 +187,20 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         setIsLoading(false);
       };
       
-      await audio.play();
-      setIsPlaying(true);
+      // Attempt to play the audio with error handling
+      try {
+        await audio.play();
+        console.log('Audio playback started');
+        setIsPlaying(true);
+      } catch (playError) {
+        console.error('Error playing audio:', playError);
+        toast.error('Browser could not play the audio');
+        throw playError;
+      }
       
     } catch (error) {
-      console.error('TTS error:', error);
-      toast.error('Failed to generate speech');
+      console.error('TTS processing error:', error);
+      toast.error('Failed to generate speech. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -447,7 +471,7 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
             >
               {isLoading ? (
                 <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                   Loading...
                 </>
               ) : isPlaying ? (
@@ -488,3 +512,4 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
 };
 
 export default CoursePreview;
+
