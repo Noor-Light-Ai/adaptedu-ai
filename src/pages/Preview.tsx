@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -30,12 +29,9 @@ const Preview = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        // In a real implementation, this would fetch the course data from your database
         setLoading(true);
         
-        // Simulate API call with timeout
         setTimeout(() => {
-          // Mock data - in a real app, this would come from the database
           setCourse({
             id: id || '1',
             title: 'Introduction to Machine Learning',
@@ -48,7 +44,6 @@ const Preview = () => {
               'Evaluate model performance and accuracy'
             ],
             sections: [
-              // Mock course sections
               { id: 's1', type: 'header', content: 'Introduction to Machine Learning' },
               { id: 's2', type: 'paragraph', content: 'Machine learning is a subset of artificial intelligence that provides systems the ability to automatically learn and improve from experience without being explicitly programmed. The focus is on developing computer programs that can access data and learn from it.' },
               { id: 's3', type: 'image', content: 'https://images.unsplash.com/photo-1555949963-ff9fe0c870eb?q=80&w=2070' },
@@ -84,15 +79,19 @@ const Preview = () => {
     fetchCourse();
   }, [id]);
   
-  const handlePublish = () => {
-    toast.success('Course published successfully!');
-    navigate('/dashboard');
+  const handlePublish = async () => {
+    try {
+      toast.success('Course published successfully!');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error publishing course:', error);
+      toast.error('Failed to publish course');
+    }
   };
   
   const handleAssistantResponse = (response: string) => {
     setAssistantMessage(response);
     
-    // Clear the message after 10 seconds
     setTimeout(() => {
       setAssistantMessage(null);
     }, 10000);
@@ -125,14 +124,12 @@ const Preview = () => {
               onPublish={handlePublish}
             />
             
-            {/* Voice Assistant */}
             <VoiceAssistant 
               courseTitle={course.title}
               courseContent={course.sections.map(s => s.content).join('\n')}
               onAssistantResponse={handleAssistantResponse}
             />
             
-            {/* Floating assistant message */}
             {assistantMessage && (
               <div className="fixed bottom-24 right-6 max-w-xs bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 animate-fade-in z-40">
                 <p className="text-sm">{assistantMessage}</p>

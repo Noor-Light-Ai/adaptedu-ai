@@ -106,26 +106,31 @@ const Create = () => {
         return;
       }
       
+      const courseData = {
+        user_id: user.user.id,
+        title: generatedCourse.title,
+        description: generatedCourse.description,
+        cover_image: generatedCourse.coverImage || 'https://images.unsplash.com/photo-1571260899304-425eee4c7efd?q=80&w=2070&auto=format&fit=crop',
+        duration: generatedCourse.estimatedDuration,
+        sections: generatedCourse.sections.length,
+        content: generatedCourse
+      };
+      
+      console.log('Publishing course with data:', courseData);
+      
       const { data, error } = await supabase
         .from('courses')
-        .insert({
-          user_id: user.user.id,
-          title: generatedCourse.title,
-          description: generatedCourse.description,
-          cover_image: generatedCourse.coverImage || 'https://images.unsplash.com/photo-1571260899304-425eee4c7efd?q=80&w=2070&auto=format&fit=crop',
-          duration: generatedCourse.estimatedDuration,
-          sections: generatedCourse.sections.length,
-          content: JSON.parse(JSON.stringify(generatedCourse))
-        })
+        .insert(courseData)
         .select()
         .single();
       
       if (error) {
         console.error('Error saving course:', error);
-        toast.error('Failed to save course to library');
+        toast.error('Failed to save course to library: ' + error.message);
         return;
       }
       
+      console.log('Course published successfully:', data);
       toast.success('Your course has been added to the library successfully!');
       navigate('/dashboard');
     } catch (error) {

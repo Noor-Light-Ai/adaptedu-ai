@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { 
   ChevronLeft, 
@@ -38,7 +37,7 @@ interface CourseData {
 interface CoursePreviewProps {
   course: CourseData;
   useTts: boolean;
-  onPublish: () => void;
+  onPublish: () => Promise<void> | void;
 }
 
 const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
@@ -47,56 +46,53 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   const [showAnswers, setShowAnswers] = useState<Record<string, boolean>>({});
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const previewRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   
-  // Calculate pages with 3 sections per page (except cover)
   const totalSections = course.sections.length;
   const sectionsPerPage = 3;
   const contentPages = Math.ceil(totalSections / sectionsPerPage);
-  const totalPages = contentPages + 1; // +1 for cover page
-  
-  // Create a mapping of sections to pages for easy reference
+  const totalPages = contentPages + 1;
+
   const sectionToPageMap = course.sections.reduce((map, section, index) => {
-    // Adding 1 because page 0 is the cover
     const pageNumber = Math.floor(index / sectionsPerPage) + 1;
     map[section.id] = pageNumber;
     return map;
   }, {} as Record<string, number>);
-  
+
   useEffect(() => {
     if (previewRef.current) {
       previewRef.current.scrollTop = 0;
     }
     
-    // Stop audio playback when changing pages
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
       setIsPlaying(false);
     }
   }, [currentPage]);
-  
+
   const handleNextPage = () => {
     if (currentPage < totalPages - 1) {
       setCurrentPage(currentPage + 1);
     }
   };
-  
+
   const handlePrevPage = () => {
     if (currentPage > 0) {
       setCurrentPage(currentPage - 1);
     }
   };
-  
+
   const handleAnswerSelect = (sectionId: string, answerIndex: number) => {
     setSelectedAnswers(prev => ({ ...prev, [sectionId]: answerIndex }));
   };
-  
+
   const handleCheckAnswer = (sectionId: string) => {
     setShowAnswers(prev => ({ ...prev, [sectionId]: true }));
   };
-  
+
   const isAnswerCorrect = (sectionId: string) => {
     const section = course.sections.find(s => s.id === sectionId);
     return section?.answer === selectedAnswers[sectionId];
@@ -104,7 +100,6 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
 
   const handlePlayAudio = async () => {
     try {
-      // If already playing, stop the playback
       if (isPlaying && audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -114,19 +109,15 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
 
       setIsLoading(true);
       
-      // Gather text content for the current page
       let textToRead = '';
       
       if (currentPage === 0) {
-        // Cover page content
         textToRead = `${course.title}. ${course.description}. Learning objectives: ${course.learningObjectives.join('. ')}`;
       } else {
-        // Get sections for this page
         const startIndex = (currentPage - 1) * sectionsPerPage;
         const endIndex = Math.min(startIndex + sectionsPerPage, totalSections);
         const sectionsToRead = course.sections.slice(startIndex, endIndex);
         
-        // Only include text content (no quizzes or images)
         textToRead = sectionsToRead
           .filter(section => ['header', 'subheader', 'paragraph'].includes(section.type))
           .map(section => section.content)
@@ -139,14 +130,12 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         return;
       }
       
-      // Limit text length to prevent API errors (OpenAI has a limit)
       if (textToRead.length > 4000) {
         textToRead = textToRead.substring(0, 4000) + '...';
       }
       
       console.log('Sending TTS request with text length:', textToRead.length);
       
-      // Call the text-to-speech edge function
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: {
           text: textToRead,
@@ -164,12 +153,10 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         throw new Error('No audio content returned from the TTS service');
       }
       
-      // Create audio element and play
       const audio = new Audio();
       audio.src = `data:audio/mp3;base64,${data.audioContent}`;
       audioRef.current = audio;
       
-      // Set up event handlers for the audio element
       audio.onloadeddata = () => {
         console.log('Audio loaded successfully');
       };
@@ -187,7 +174,6 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         setIsLoading(false);
       };
       
-      // Attempt to play the audio with error handling
       try {
         await audio.play();
         console.log('Audio playback started');
@@ -197,7 +183,6 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         toast.error('Browser could not play the audio');
         throw playError;
       }
-      
     } catch (error) {
       console.error('TTS processing error:', error);
       toast.error('Failed to generate speech. Please try again.');
@@ -260,11 +245,9 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
   );
 
   const renderContentPage = (pageIndex: number) => {
-    // Calculate section indices for this page
     const startIndex = (pageIndex - 1) * sectionsPerPage;
     const endIndex = Math.min(startIndex + sectionsPerPage, totalSections);
     
-    // Get sections for this page
     const sectionsToShow = course.sections.slice(startIndex, endIndex);
     
     return (
@@ -277,7 +260,7 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
       </div>
     );
   };
-  
+
   const renderSection = (section: CourseSection) => {
     switch (section.type) {
       case 'header':
@@ -332,15 +315,15 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
                     onClick={() => handleAnswerSelect(section.id, index)}
                     className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors
                       ${selectedAnswers[section.id] === index 
-                        ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                        ? 'border-blue-500 bg-blue-500 text-white'
                         : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50'
                       }
                       ${showAnswers[section.id] && index === section.answer
-                        ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                        ? 'border-green-500 bg-green-500 text-white'
                         : ''
                       }
                       ${showAnswers[section.id] && selectedAnswers[section.id] === index && index !== section.answer
-                        ? 'border-red-500 bg-red-50 dark:bg-red-900/20'
+                        ? 'border-red-500 bg-red-500 text-white'
                         : ''
                       }
                     `}
@@ -406,6 +389,18 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         );
       default:
         return null;
+    }
+  };
+
+  const handlePublishCourse = async () => {
+    try {
+      setIsPublishing(true);
+      await onPublish();
+      setIsPublishing(false);
+    } catch (error) {
+      console.error('Error publishing course:', error);
+      toast.error('Failed to publish course. Please try again.');
+      setIsPublishing(false);
     }
   };
 
@@ -490,11 +485,21 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
         </div>
 
         <Button 
-          onClick={onPublish}
+          onClick={handlePublishCourse}
           className="gap-2"
+          disabled={isPublishing}
         >
-          <Bookmark className="h-4 w-4" />
-          Publish Course
+          {isPublishing ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Publishing...
+            </>
+          ) : (
+            <>
+              <Bookmark className="h-4 w-4" />
+              Publish Course
+            </>
+          )}
         </Button>
 
         <Button
@@ -512,4 +517,3 @@ const CoursePreview = ({ course, useTts, onPublish }: CoursePreviewProps) => {
 };
 
 export default CoursePreview;
-
