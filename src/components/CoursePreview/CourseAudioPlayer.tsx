@@ -1,5 +1,5 @@
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Play, Square, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +25,25 @@ const CourseAudioPlayer = ({
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  
+  // Clean up audio when component unmounts
+  useEffect(() => {
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+    };
+  }, []);
+
+  // Clean up audio when page changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+      setIsPlaying(false);
+    }
+  }, [currentPage]);
 
   const handlePlayAudio = async () => {
     try {
@@ -51,11 +70,13 @@ const CourseAudioPlayer = ({
         return;
       }
       
-      if (textToRead.length > 4000) {
-        textToRead = textToRead.substring(0, 4000) + '...';
+      // Limit text length to avoid edge function issues
+      if (textToRead.length > 3000) {
+        textToRead = textToRead.substring(0, 3000) + '...';
+        toast.info('Content was too long. Reading a shortened version.');
       }
       
-      console.log('Sending TTS request with text length:', textToRead.length);
+      console.log('Sending TTS request with text:', textToRead.substring(0, 100) + '...');
       
       const { data, error } = await supabase.functions.invoke('text-to-speech', {
         body: {

@@ -1,4 +1,5 @@
 
+import { useEffect } from 'react';
 import CourseSectionRenderer from './CourseSectionRenderer';
 import { CourseSection } from '../CoursePreview';
 
@@ -15,10 +16,20 @@ const CourseContentPage = ({
   onAnswerSelect, 
   onCheckAnswer 
 }: CourseContentPageProps) => {
+  // Log page sections for debugging
+  useEffect(() => {
+    console.log('Rendering page sections:', sections.map(s => ({ type: s.type, id: s.id })));
+  }, [sections]);
+
   return (
     <div className="space-y-8 min-h-[600px] p-6 animate-fade-in">
       {sections.map((section, index) => (
-        <div key={section.id} className="animate-fade-up" style={{ animationDelay: `${index * 150}ms` }}>
+        <div 
+          key={section.id} 
+          className="animate-fade-up" 
+          style={{ animationDelay: `${index * 150}ms` }}
+          id={`section-${section.id}`}
+        >
           <CourseSectionRenderer 
             section={section} 
             quizState={quizAnswers[section.id]} 

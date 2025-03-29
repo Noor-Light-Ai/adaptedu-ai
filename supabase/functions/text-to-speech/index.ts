@@ -19,7 +19,7 @@ serve(async (req) => {
       throw new Error('Text is required')
     }
     
-    console.log(`Processing TTS request for text length: ${text.length}, voice: ${voice || 'alloy'}`)
+    console.log(`Processing TTS request for text with length: ${text.length}, voice: ${voice || 'alloy'}`)
 
     // Initialize OpenAI client with API key
     const apiKey = Deno.env.get('OPENAI_API_KEY')
@@ -50,9 +50,12 @@ serve(async (req) => {
 
     // Convert audio buffer to base64
     const arrayBuffer = await speechResponse.arrayBuffer()
-    const base64Audio = btoa(
-      String.fromCharCode(...new Uint8Array(arrayBuffer))
-    )
+    const uint8Array = new Uint8Array(arrayBuffer)
+    let binaryString = ''
+    for (let i = 0; i < uint8Array.length; i++) {
+      binaryString += String.fromCharCode(uint8Array[i])
+    }
+    const base64Audio = btoa(binaryString)
     
     console.log('TTS generation successful, response size:', base64Audio.length)
 
