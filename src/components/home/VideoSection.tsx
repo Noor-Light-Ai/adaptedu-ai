@@ -1,12 +1,16 @@
-
+import { useRef } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Play } from 'lucide-react';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const VideoSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const isVisible = useScrollAnimation(sectionRef);
+
   return (
-    <section className="py-16 px-6 bg-gray-50 dark:bg-gray-900/30">
+    <section ref={sectionRef} className="py-16 px-6 bg-gray-50 dark:bg-gray-900/30">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center max-w-3xl mx-auto mb-12">
+        <div className={`text-center max-w-3xl mx-auto mb-12 transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-3xl font-bold mb-4">See AdaptEdU in Action</h2>
           <p className="text-gray-600 dark:text-gray-300">
             Watch this short video to understand how AdaptEdU works and how it can transform your content
@@ -15,7 +19,7 @@ const VideoSection = () => {
         
         <Dialog>
           <DialogTrigger asChild>
-            <div className="relative max-w-3xl mx-auto rounded-xl overflow-hidden shadow-xl cursor-pointer group">
+            <div className={`relative max-w-3xl mx-auto rounded-xl overflow-hidden shadow-xl cursor-pointer group transition-all duration-700 delay-200 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <img 
                 src="https://img.youtube.com/vi/YlTbv09no7M/maxresdefault.jpg" 
                 alt="AdaptEdU Video Thumbnail" 

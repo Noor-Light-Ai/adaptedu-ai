@@ -1,14 +1,18 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { FileText, RotateCcw, BookOpen } from 'lucide-react';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const FeaturesSection = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+  const isScrollVisible = useScrollAnimation(sectionRef);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  const animationVisible = isVisible || isScrollVisible;
 
   const features = [
     {
@@ -32,9 +36,9 @@ const FeaturesSection = () => {
   ];
 
   return (
-    <section className="py-20 px-6 bg-gray-50 dark:bg-gray-900/30">
+    <section ref={sectionRef} className="py-20 px-6 bg-gray-50 dark:bg-gray-900/30">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 transform ${animationVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-3xl font-bold mb-4">How AdaptEdU Works</h2>
           <p className="text-gray-600 dark:text-gray-300">
             A simple three-step process to transform your content into engaging educational experiences
@@ -43,7 +47,7 @@ const FeaturesSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className={`border-none shadow-md overflow-hidden transition-all duration-700 delay-${feature.delay} transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+            <Card key={index} className={`border-none shadow-md overflow-hidden transition-all duration-700 delay-${feature.delay} transform ${animationVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <div className="h-2 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mb-4">

@@ -1,22 +1,27 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, BookOpen, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AnimatedCounter from './AnimatedCounter';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const HeroSection = () => {
-  const [isVisible, setIsVisible] = useState(false);
+  const [isInitiallyVisible, setIsInitiallyVisible] = useState(false);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const isVisible = useScrollAnimation(sectionRef, 0.1);
 
   useEffect(() => {
-    setIsVisible(true);
+    setIsInitiallyVisible(true);
   }, []);
 
+  // Combine initial animation with scroll animation
+  const animationVisible = isInitiallyVisible || isVisible;
+
   return (
-    <section className="pt-32 pb-16 px-6">
+    <section ref={sectionRef} className="pt-32 pb-16 px-6">
       <div className="container mx-auto max-w-6xl">
         <div className="flex flex-col md:flex-row items-center justify-between gap-12">
-          <div className={`max-w-2xl transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+          <div className={`max-w-2xl transition-all duration-700 transform ${animationVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
             <div className="bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-300 px-4 py-2 rounded-full inline-flex items-center text-sm font-medium mb-6">
               <Zap className="h-4 w-4 mr-2" />
               Transform Your Content into Engaging Courses
@@ -46,7 +51,7 @@ const HeroSection = () => {
               </Button>
             </div>
 
-            <AnimatedCounter initialCount={1765329} isVisible={isVisible} />
+            <AnimatedCounter initialCount={1765329} isVisible={animationVisible} />
           </div>
         </div>
       </div>

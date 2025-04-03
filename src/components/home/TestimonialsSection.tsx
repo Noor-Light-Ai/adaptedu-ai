@@ -1,10 +1,14 @@
-
+import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, Star } from 'lucide-react';
+import { useScrollAnimation } from '@/hooks/useScrollAnimation';
 
 const TestimonialsSection = () => {
+  const sectionRef = useRef<HTMLElement>(null);
+  const isVisible = useScrollAnimation(sectionRef);
+
   const testimonials = [
     {
       name: "Dr. Sarah Johnson",
@@ -51,9 +55,9 @@ const TestimonialsSection = () => {
   ];
 
   return (
-    <section className="py-20 px-6 bg-gray-50 dark:bg-gray-900/30">
+    <section ref={sectionRef} className="py-20 px-6 bg-gray-50 dark:bg-gray-900/30">
       <div className="container mx-auto max-w-6xl">
-        <div className="text-center max-w-3xl mx-auto mb-16">
+        <div className={`text-center max-w-3xl mx-auto mb-16 transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <h2 className="text-3xl font-bold mb-4">What Our Users Say</h2>
           <p className="text-gray-600 dark:text-gray-300">
             Educators and content creators are transforming their learning materials with AdaptEdU
@@ -62,7 +66,11 @@ const TestimonialsSection = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {testimonials.map((testimonial, index) => (
-            <Card key={index} className="h-full border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+            <Card 
+              key={index} 
+              className={`h-full border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden hover:shadow-md transition-all duration-700 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}
+              style={{ transitionDelay: `${index * 100}ms` }}
+            >
               <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-center mb-4">
                   <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
@@ -93,7 +101,7 @@ const TestimonialsSection = () => {
           ))}
         </div>
         
-        <div className="mt-12 text-center">
+        <div className={`mt-12 text-center transition-all duration-700 delay-500 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
           <Button asChild variant="outline" size="lg" className="gap-2">
             <Link to="/create">
               Join Our Community
