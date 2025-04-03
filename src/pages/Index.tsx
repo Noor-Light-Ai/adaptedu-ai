@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, BookOpen, RotateCcw, Zap, Lightbulb, FileText, Award, Play, Star } from 'lucide-react';
@@ -133,7 +132,7 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                icon: <Upload className="h-6 w-6 text-blue-500" />,
+                icon: <FileText className="h-6 w-6 text-blue-500" />,
                 title: "Upload Your Content",
                 description: "Upload your PDF files containing the raw material for your course creation.",
                 delay: 0,
