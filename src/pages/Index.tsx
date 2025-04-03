@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight, BookOpen, RotateCcw, Zap, Lightbulb, FileText, Award, Play, Star } from 'lucide-react';
@@ -62,11 +63,11 @@ const Index = () => {
                 </Button>
               </div>
 
-              {/* Animated Counter */}
-              <div className={`mt-8 text-lg text-gray-600 dark:text-gray-300 transition-all duration-700 delay-500 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-                <div className="flex items-center">
-                  <span className="font-bold text-blue-600 dark:text-blue-400 text-xl mr-2">{formattedCount}</span>
-                  <span>Courses Adapted and still counting</span>
+              {/* Animated Counter - Centered and in two lines */}
+              <div className={`mt-10 text-center transition-all duration-700 delay-500 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                <div className="flex flex-col items-center">
+                  <span className="font-bold text-blue-600 dark:text-blue-400 text-3xl md:text-4xl">{formattedCount}</span>
+                  <span className="text-gray-600 dark:text-gray-300 text-lg mt-2">Total courses created</span>
                 </div>
               </div>
             </div>
