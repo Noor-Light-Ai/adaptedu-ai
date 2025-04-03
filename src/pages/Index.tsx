@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, Upload, BookOpen, FileText, RotateCcw, Zap, Lightbulb, Award, Play, Star } from 'lucide-react';
+import { ChevronRight, BookOpen, RotateCcw, Zap, Lightbulb, FileText, Award, Play, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
@@ -8,10 +9,21 @@ import Header from '@/components/Header';
 
 const Index = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [count, setCount] = useState(1765329);
 
   useEffect(() => {
     setIsVisible(true);
+
+    // Increment counter every 2 seconds for animation effect
+    const interval = setInterval(() => {
+      setCount(prevCount => prevCount + Math.floor(Math.random() * 5) + 1);
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, []);
+
+  // Format counter with commas
+  const formattedCount = count.toLocaleString('en-US');
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -50,28 +62,17 @@ const Index = () => {
                   </Link>
                 </Button>
               </div>
-            </div>
-            
-            <div className={`relative transition-all duration-700 delay-300 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <div className="w-full h-full max-w-sm">
-                <div className="glass-panel p-8 rounded-2xl relative z-10">
-                  <div className="flex items-center justify-center w-full h-32 bg-gray-100 dark:bg-gray-800 rounded-lg mb-6">
-                    <Upload className="h-10 w-10 text-blue-500/50" />
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-md w-2/3"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-md w-full"></div>
-                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-md w-5/6"></div>
-                  </div>
-                  <div className="mt-6 flex gap-2">
-                    <div className="h-9 bg-blue-500 rounded-md w-1/2"></div>
-                    <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded-md w-1/2"></div>
-                  </div>
+
+              {/* Animated Counter */}
+              <div className={`mt-8 text-lg text-gray-600 dark:text-gray-300 transition-all duration-700 delay-500 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+                <div className="flex items-center">
+                  <span className="font-bold text-blue-600 dark:text-blue-400 text-xl mr-2">{formattedCount}</span>
+                  <span>Courses Adapted and still counting</span>
                 </div>
-                <div className="absolute top-6 right-6 w-full h-full bg-gradient-to-br from-blue-500/10 to-indigo-500/10 rounded-2xl border border-white/20 dark:border-white/5 -z-10"></div>
-                <div className="absolute top-12 right-12 w-full h-full bg-gradient-to-br from-blue-500/5 to-indigo-500/5 rounded-2xl border border-white/10 dark:border-white/5 -z-20"></div>
               </div>
             </div>
+            
+            {/* Removed the vertical rectangle with upload sign */}
           </div>
         </div>
       </section>
