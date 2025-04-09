@@ -20,7 +20,7 @@ const Header = () => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Create Course', path: '/create' },
-    { name: 'Dashboard', path: '/dashboard' },
+    { name: 'Library', path: '/library' },
   ];
   
   const isActive = (path: string) => location.pathname === path;
@@ -45,7 +45,7 @@ const Header = () => {
               key={link.path}
               to={link.path}
               className={`text-sm font-medium transition-colors hover:text-blue-500 ${
-                isActive(link.path) 
+                (isActive(link.path) || (link.path === '/library' && location.pathname === '/dashboard'))
                   ? 'text-blue-500' 
                   : 'text-gray-700 dark:text-gray-200'
               }`}
@@ -77,7 +77,7 @@ const Header = () => {
                 key={link.path}
                 to={link.path}
                 className={`text-sm font-medium transition-colors hover:text-blue-500 ${
-                  isActive(link.path) 
+                  (isActive(link.path) || (link.path === '/library' && location.pathname === '/dashboard'))
                     ? 'text-blue-500' 
                     : 'text-gray-700 dark:text-gray-200'
                 }`}

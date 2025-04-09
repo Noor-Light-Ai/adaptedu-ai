@@ -8,9 +8,10 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Dashboard from "./pages/Dashboard";
+import Library from "./pages/Library";
 import Create from "./pages/Create";
 import Preview from "./pages/Preview";
+import Performance from "./pages/Performance";
 import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient();
@@ -28,9 +29,11 @@ const App = () => (
             
             {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Library />} />
+              <Route path="/library" element={<Library />} />
               <Route path="/create" element={<Create />} />
               <Route path="/preview/:id" element={<Preview />} />
+              <Route path="/performance/:id" element={<Performance />} />
             </Route>
             
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
