@@ -17,22 +17,24 @@ const UserMenu = () => {
   const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   
-  if (!user) {
-    return (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" asChild>
-          <Link to="/auth">Sign In</Link>
-        </Button>
-        <Button asChild>
-          <Link to="/auth">Sign Up</Link>
-        </Button>
-      </div>
-    );
-  }
+  // In test mode, display a test user profile
+  const testUser = {
+    email: 'test@example.com',
+    name: 'Test User'
+  };
+  
+  // Use either the authenticated user or test user
+  const currentUser = user || testUser;
+  const displayName = profile?.username || (currentUser === testUser ? testUser.name : null);
 
   const handleSignOut = async () => {
-    await signOut();
+    // In test mode, just close the menu
+    // Regular auth functionality remains for when auth is re-enabled
     setIsOpen(false);
+    
+    if (user) {
+      await signOut();
+    }
   };
 
   return (
@@ -40,9 +42,9 @@ const UserMenu = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-10 w-10 rounded-full">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={profile?.avatar_url} alt={profile?.username || user.email} />
+            <AvatarImage src={profile?.avatar_url} alt="User" />
             <AvatarFallback>
-              {(profile?.username || user.email || '').substring(0, 2).toUpperCase()}
+              {currentUser.email.substring(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
         </Button>
@@ -50,8 +52,8 @@ const UserMenu = () => {
       <DropdownMenuContent className="w-56" align="end">
         <div className="flex items-center justify-start gap-2 p-2">
           <div className="flex flex-col space-y-0.5 leading-none">
-            <p className="font-medium text-sm">{profile?.username || user.email}</p>
-            <p className="text-xs text-muted-foreground">{user.email}</p>
+            <p className="font-medium text-sm">{profile?.username || (currentUser === testUser ? testUser.name : currentUser.email)}</p>
+            <p className="text-xs text-muted-foreground">{currentUser.email}</p>
           </div>
         </div>
         <DropdownMenuSeparator />
