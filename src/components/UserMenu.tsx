@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,24 +16,18 @@ const UserMenu = () => {
   const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   
-  // In test mode, display a test user profile
   const testUser = {
     email: 'test@example.com',
     name: 'Test User'
   };
   
-  // Use either the authenticated user or test user
   const currentUser = user || testUser;
   const displayName = profile?.username || (currentUser === testUser ? testUser.name : null);
 
   const handleSignOut = async () => {
-    // In test mode, just close the menu
-    // Regular auth functionality remains for when auth is re-enabled
+    localStorage.removeItem('savedCredentials');
+    await signOut();
     setIsOpen(false);
-    
-    if (user) {
-      await signOut();
-    }
   };
 
   return (

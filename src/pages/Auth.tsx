@@ -1,5 +1,4 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { Mail, Lock, ArrowRight, User, AlertCircle } from 'lucide-react';
 import Header from '@/components/Header';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,11 +20,23 @@ const Auth = () => {
   const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
 
   // If user is already logged in, redirect to dashboard
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
+
+  // Check for saved credentials on mount
+  useEffect(() => {
+    const savedCredentials = localStorage.getItem('savedCredentials');
+    if (savedCredentials) {
+      const { email: savedEmail, password: savedPassword } = JSON.parse(savedCredentials);
+      setEmail(savedEmail);
+      setPassword(savedPassword);
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +58,11 @@ const Auth = () => {
         if (error) throw error;
         
         if (data.user) {
+          if (rememberMe) {
+            localStorage.setItem('savedCredentials', JSON.stringify({ email, password }));
+          } else {
+            localStorage.removeItem('savedCredentials');
+          }
           toast.success('Account created successfully!');
           navigate('/dashboard');
         }
@@ -56,6 +73,12 @@ const Auth = () => {
         });
 
         if (error) throw error;
+        
+        if (rememberMe) {
+          localStorage.setItem('savedCredentials', JSON.stringify({ email, password }));
+        } else {
+          localStorage.removeItem('savedCredentials');
+        }
         
         toast.success('Logged in successfully!');
         navigate('/dashboard');
@@ -141,6 +164,17 @@ const Auth = () => {
                 minLength={6}
               />
             </div>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="rememberMe"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+            />
+            <Label htmlFor="rememberMe" className="text-sm text-gray-600 dark:text-gray-300">
+              Remember me
+            </Label>
           </div>
           
           <Button 

@@ -7,7 +7,7 @@ type ProtectedRouteProps = {
 };
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
   
   // Show loading state while checking authentication
   if (loading) {
@@ -18,8 +18,12 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
   
-  // Auth check temporarily disabled for testing
-  // Return children or outlet regardless of authentication status
+  // Redirect to auth page if not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+  
+  // Render children or outlet
   return children ? <>{children}</> : <Outlet />;
 };
 
